@@ -1,4 +1,4 @@
-import MC_module_v2 as MC
+import Mc_module as MC
 from scipy import stats
 import numpy as np
 import pandas as pd
