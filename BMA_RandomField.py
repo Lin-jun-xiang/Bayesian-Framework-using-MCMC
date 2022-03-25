@@ -1,17 +1,36 @@
-# For demo case (homogeneous conductivity)
+# For Minshuan case (heterogeneous, random field)
 import Mc_module as MC
 from scipy import stats
 import numpy as np
 import pandas as pd
 import time
 import Voronoi_tessellation
+import RandomField as RF
+
+def getPositiondata():
+    pos = ([], [], [])
+    for i in range(MC.doc.getNumberOfNodes()):
+        pos[0].append(MC.doc.getX(i))
+        pos[1].append(MC.doc.getY(i))
+        pos[2].append(MC.doc.getZ(i))
+
+    return pos
 
 def prior_ensemble(mu=1e-3, sigma=1e-3):
-    prior_theta_K1 = stats.norm.rvs(loc=np.math.log(mu**2/(mu**2+sigma**2)**0.5), scale=np.math.log((sigma/mu)**2+1)**0.5, size=1000)
-    prior_theta_K2 = stats.norm.rvs(loc=np.math.log(mu**2/(mu**2+sigma**2)**0.5), scale=np.math.log((sigma/mu)**2+1)**0.5, size=1000)
-
+    rfg = RF.RandomFieldGenerator()
+    prior_gs_mean, prior_gs_var, prior_gs_ls = [], [], []
+    realizations = []
+    for i in range(nRealizations):
+        # Only take rd_mean in prior
+        prior_gs_mean.append(rfg.gs_meanDistr()[0])
+        prior_gs_var.append(rfg.gs_varDistr())
+        prior_gs_ls.append(rfg.gs_lenScaleDistr())
+        realizations.append(rfg.uncondFieldGenerator(pos,
+                                                     prior_gs_mean[i],
+                                                     prior_gs_var[i],
+                                                     prior_gs_ls[i])
     prior = []
-    for i in range(len(prior_theta_K1)):
+    for i in range(len(prior)):
         MC.set_ifm_K(K1_zone_elements, np.math.exp(prior_theta_K1[i]))
         MC.set_ifm_K(K2_zone_elements, np.math.exp(prior_theta_K2[i]))
         prior.append(MC.get_sim_data(nodes, area=voronoi_area)[output_target])
@@ -19,7 +38,7 @@ def prior_ensemble(mu=1e-3, sigma=1e-3):
 
     return prior
 
-def create_markov_chain(n=1000):
+def create_markov_chain(n):
     chain = []
     chain.append(MC.proposal_distribution(theta=1e-3, s=2))
     posterior = []
@@ -72,10 +91,12 @@ if __name__ == "__main__":
 
     output_target = 'mass_discharge'
 
+    nRealizations = 100
+
     prior = prior_ensemble()
 
-    markov_chain = create_markov_chain(1800)
-    burn_in_period = 800
+    markov_chain = create_markov_chain(nRealizations)
+    burn_in_period = 0
 
     posterior = markov_chain['posterior'][burn_in_period-1:]
 

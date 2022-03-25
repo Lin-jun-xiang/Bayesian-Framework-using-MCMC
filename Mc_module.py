@@ -65,12 +65,18 @@ def set_ifm_K(zone_elements, theta_K):
     Set conductivity(X=Y=10*Z) in each element; units - "m/d"
     Input conductivity units is "m/s", need to convert to "m/d"
     """
-    theta_K = theta_K * 24 * 3600
+    if type(theta_K) == float:
+        theta_K = theta_K * 24 * 3600
 
-    for element in zone_elements:
-        doc.setMatXConductivityValue3D(int(element)-1, theta_K)
-        doc.setMatYConductivityValue3D(int(element)-1, theta_K)
-        doc.setMatZConductivityValue3D(int(element)-1, theta_K*0.1)
+        for element in zone_elements:
+            doc.setMatXConductivityValue3D(int(element)-1, theta_K)
+            doc.setMatYConductivityValue3D(int(element)-1, theta_K)
+            doc.setMatZConductivityValue3D(int(element)-1, theta_K*0.1)
+    else:
+        for i in range(len(zone_elements)):
+            doc.setMatXConductivityValue3D(int(zone_elements[i])-1, theta_K[i] * 24 * 3600)
+            doc.setMatYConductivityValue3D(int(zone_elements[i])-1, theta_K[i] * 24 * 3600)
+            doc.setMatZConductivityValue3D(int(zone_elements[i])-1, theta_K[i] * 24 * 3600 * 0.1)
 
 def initialize_results():
     """
