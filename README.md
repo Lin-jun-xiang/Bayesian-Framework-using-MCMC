@@ -38,6 +38,11 @@ As following image, after M-H algorithm iteration, we will get posterior (stable
 Create a random field and run the transport simulation as "true" site, then
 use the true site contaminated data as our observation.
 
+First, the available observation data are used to update the
+covariance parameters via Bayesian inference. We use these
+covariance parameters to generate random conductivity
+fields (unconditioned).
+
 The "true" site model:
 >1. gs_mean : -10.981
 >2. gs_var : 3.2305442
