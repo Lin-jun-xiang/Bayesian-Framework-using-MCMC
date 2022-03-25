@@ -131,6 +131,13 @@ def proposal_distribution(theta, s=1):
     return np.random.uniform(1e-6, 1e-3, size=2)
 
 def proposal_calculate(target, condition):
+    """
+    Parameters
+    ------
+    target : theta_cur
+    condition : theta_star
+
+    """
     return joint_distribution(stats.norm.pdf(target, condition))
 
 def joint_distribution(dist):

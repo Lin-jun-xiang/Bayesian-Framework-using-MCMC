@@ -1,6 +1,5 @@
 # For Minshuan case (heterogeneous, random field)
 import Mc_module as MC
-from scipy import stats
 import numpy as np
 import pandas as pd
 import time
@@ -16,10 +15,11 @@ def getPositiondata():
 
     return pos
 
-def prior_ensemble(mu=1e-3, sigma=1e-3):
+def prior_ensemble():
     rfg = RF.RandomFieldGenerator()
     prior_gs_mean, prior_gs_var, prior_gs_ls = [], [], []
     realizations = []
+    prior = []
     for i in range(nRealizations):
         # Only take rd_mean in prior
         prior_gs_mean.append(rfg.gs_meanDistr()[0])
@@ -28,12 +28,10 @@ def prior_ensemble(mu=1e-3, sigma=1e-3):
         realizations.append(rfg.uncondFieldGenerator(pos,
                                                      prior_gs_mean[i],
                                                      prior_gs_var[i],
-                                                     prior_gs_ls[i])
-    prior = []
-    for i in range(len(prior)):
-        MC.set_ifm_K(K1_zone_elements, np.math.exp(prior_theta_K1[i]))
-        MC.set_ifm_K(K2_zone_elements, np.math.exp(prior_theta_K2[i]))
-        prior.append(MC.get_sim_data(nodes, area=voronoi_area)[output_target])
+                                                     prior_gs_ls[i]))
+
+        MC.set_ifm_K(K_zone, realizations[i])
+        prior.append(MC.get_sim_data(obs_nodes, area=voronoi_area)[output_target])
         print('prior-', i+1)
 
     return prior
@@ -41,19 +39,19 @@ def prior_ensemble(mu=1e-3, sigma=1e-3):
 def create_markov_chain(n):
     chain = []
     chain.append(MC.proposal_distribution(theta=1e-3, s=2))
-    posterior = []
     rejection_rate = 0
 
     covMatrix = MC.covariance_matrix(n_obs=len(obs_data))
 
+    posterior = []
     for t in range(n-1):
         theta_cur = chain[-1]
 
-        likelihood_cur = MC.likelihood_calculate(obs_data, nodes, K_zone, theta_cur, covMatrix, area=voronoi_area)
+        likelihood_cur = MC.likelihood_calculate(obs_data, obs_nodes, K_zone, theta_cur, covMatrix, area=voronoi_area)
 
         theta_star = MC.proposal_distribution(theta=theta_cur, s=2)
 
-        likelihood_star = MC.likelihood_calculate(obs_data, nodes, K_zone, theta_star, covMatrix, area=voronoi_area)
+        likelihood_star = MC.likelihood_calculate(obs_data, obs_nodes, K_zone, theta_star, covMatrix, area=voronoi_area)
 
         u = np.random.uniform(size=1)[0]
 
@@ -75,16 +73,16 @@ def create_markov_chain(n):
 if __name__ == "__main__":
     time_start = time.time()
 
-    MC.get_fem_file('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\True_transport.fem')
+    MC.get_fem_file('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\True_transport_v2.fem')
 
-    K1_zone_elements = pd.read_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\K1_ele.xlsx')['Element']
-    K2_zone_elements = pd.read_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\K2_ele.xlsx')['Element']
-    K_zone = [K1_zone_elements, K2_zone_elements]
+    K_zone = [e+1 for e in range(MC.doc.getNumberOfElements())]
 
-    nodes = MC.get_well_index("C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\xml\\well_sampling2.xml")
-    # elements = MC.get_well_index("C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\xml\\well_K.xml")
-    obs_data_file = 'C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Obs_conc_v1-2.xlsx'
+    pos = getPositiondata()
+
+    obs_data_file = 'C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Obs_conc_RandomField.xlsx'
     obs_data = MC.get_obs_data(obs_data_file)
+
+    obs_nodes = list(obs_data.keys())
 
     voronoi_area = Voronoi_tessellation.voronoi(obs_data=pd.read_excel(obs_data_file))
     control_plane_area = 1000
@@ -105,8 +103,9 @@ if __name__ == "__main__":
     print('rejection rate=', markov_chain['rejection'])
     print('time=', time_end-time_start)
     # pd.DataFrame(markov_chain['chain']).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Theta_v1.xlsx')
-    pd.DataFrame(prior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Prior_qc_v1-2.xlsx')
+    pd.DataFrame(prior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Prior_qc_randomField.xlsx')
     pd.DataFrame(posterior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Posterior_qc_v1-2.xlsx')
     
     import winsound
     winsound.PlaySound('SystemHand', winsound.SND_ALIAS)
+

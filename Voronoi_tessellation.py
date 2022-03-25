@@ -1,8 +1,6 @@
 import numpy as np
 from foronoi import Voronoi, Polygon, Visualizer, VoronoiObserver
-import pandas as pd
 
-obs_data = pd.read_excel('C:\JunXiang\傑明工程\Fem\excel\\Obs_conc_v1.xlsx')
 def voronoi(obs_data):
     """
     Ref : https://github.com/Yatoom/foronoi
