@@ -48,3 +48,15 @@ The hydraulic conductivity field (Kxx=Kyy=Kzz) of true site in FEFLOW as followi
 <p align="center">
   <image src="https://user-images.githubusercontent.com/63782903/160131301-ffb38b51-fda7-4ce6-a7f3-cbe390b4dc62.png" width=50%/>
 </p>
+
+Then we setting the Mass concentration Dirichlet BC, then start 100 days simulation.
+
+As following image, the left image show the concentration distribution in slice-1, and
+we will take the control plane data as our concentration of observation.
+
+Using Voronoi method to calculate the control plane mass flux is "0.00286233".
+
+<p align="center">
+  <image src="https://user-images.githubusercontent.com/63782903/160133801-5e558cd4-e2ba-4b93-a4b3-64ed8135b8dc.png" width=50%>
+</p>
+
