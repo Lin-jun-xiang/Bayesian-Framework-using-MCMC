@@ -31,3 +31,20 @@ As following image, after M-H algorithm iteration, we will get posterior (stable
 <p align="center">
 <img src="https://user-images.githubusercontent.com/63782903/160072144-1a8d6d96-5fb3-418a-b9f4-966232f4bff5.png" alt="Cover" width="50%"/>
 </p>
+
+---
+## Heterogeneous demo case
+
+Create a random field and run the transport simulation as "true" site, then
+use the true site contaminated data as our observation.
+
+The "true" site model:
+>1. gs_mean : -10.981
+>2. gs_var : 3.2305442
+>3. gs_ls : [11.1, 40.73, 1.53]
+
+The hydraulic conductivity field (Kxx=Kyy=Kzz) of true site in FEFLOW as following image:
+
+<p align="center">
+  <image src="https://user-images.githubusercontent.com/63782903/160131301-ffb38b51-fda7-4ce6-a7f3-cbe390b4dc62.png" width=50%/>
+</p>
