@@ -12,12 +12,11 @@ The contaminated site model exist some uncertainty (ex: model, boundary conditio
 reduce the uncertainty and show the range of uncertainty will be our target.
 
 Uncertainty target:
->1. Hydraulic conductivity will be our uncertainty target.
->2. In the demo case, we suppose our model is homogeneous conductivity field which only have 2 values of conductivuty.
->3. In the Mingshuan site case, we suppose our model is heterogeneous conductivity field (so called random field), and the uncertainty target will be randomFieldGenerator's parameters (eg:mean, variance, len scale)
+>1. In the **homogeneous case**, the hydraulic conductivity will be our uncertainty target (see BMA_algorithm.py).
+>2. In the **heteogeneous case**, the geostatistical model parameters (eg: mean, variance, len_scale) will be our uncertainty target which is uses to create hydraulic conductivity random field (realization).
 
-* Notice : the uncertainty parameter target only one - hydraulic conductivity in "case-2."  
-           However, the uncertainty parameter target have 5 - gs_mean, gs_variance, ls_x, ls_y and ls_z in "case-3.".
+* Notice : the uncertainty parameter target only one - hydraulic conductivity in "case-1."  
+           However, the uncertainty parameter target have 5 - gs_mean, gs_variance, ls_x, ls_y and ls_z in "case-2.".
 ---
 ## Markov chain Monte Carlo
 
