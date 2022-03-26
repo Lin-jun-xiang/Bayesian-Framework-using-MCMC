@@ -12,6 +12,8 @@ Uncertainty target:
 >2. In the demo case, we suppose our model is homogeneous conductivity field which only have 2 values of conductivuty.
 >3. In the Mingshuan site case, we suppose our model is heterogeneous conductivity field (so called random field), and the uncertainty target will be randomFieldGenerator's parameters (eg:mean, variance, len scale)
 
+* Notice : the uncertainty parameter target only one - hydraulic conductivity in "case-2."  
+           However, the uncertainty parameter target have 5 - gs_mean, gs_variance, ls_x, ls_y and ls_z in "case-3.".
 ---
 ## Markov chain Monte Carlo
 
