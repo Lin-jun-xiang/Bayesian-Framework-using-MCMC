@@ -105,8 +105,7 @@ def likelihood_calculate(obs_data, nodes, K_zone, theta, covMatrix, area, target
     return-1 P(D|theta) which is a value
     return-2 dictionary of simulate data(ex:concentration)
     """
-    for i in range(len(theta)):
-        set_ifm_K(K_zone[i], theta[i])
+    set_ifm_K(K_zone, theta)
 
     sim_data = get_sim_data(nodes, area)
 
@@ -121,37 +120,59 @@ def likelihood_calculate(obs_data, nodes, K_zone, theta, covMatrix, area, target
 
 def k_target_distribution(theta, mu=1e-3, sigma=1e-3):
     """
-    prior conductivity distribution ~ N(mu, sigma)
+    Calculate the "p(theta)" of conductivity
+    Then call the function "joint_distribution", get
+    the joint distribution of conductivity
+
+    Parameters
+    ----------
+    Prior conductivity distribution ~ N(mu, sigma)
+
+    Returns
+    -------
     return a value which belong to the distr
     """
     return joint_distribution([stats.norm.pdf(np.math.log(theta_i), loc=np.math.log(mu**2/(mu**2+sigma**2)**0.5), scale=(np.math.log((sigma/mu)**2+1))**0.5) for theta_i in theta])
 
+def gs_parameters_target_distribution(theta, mu=np.log(2e-5), sigma=0.3):
+    """
+    Calculate the "p(theta)" of gs_parameters
+    Then call the function "joint_distribution", get
+    the joint distribution of gs_parameters
+
+    Parameters
+    ----------
+    Prior gs_mean distribution ~ N(mu, sigma)
+
+    Prior gs_var distribution ~ Uniform(0.2, 5.)
+    -> see the "RandomField.py (down and upper)"
+
+    Prior gs_lenScale distribution ~ Uniform([8., 8., 1.], [50., 50., 4.])
+    -> see the "RandomField.py (down and upper)"
+
+    Returns
+    -------
+    p(gs_mean)*p(gs_var)*p(gs_lenScale_x)*p(gs_lenScale_y)*p(gs_lenScale_z)
+    """
+    p_gs_mean = stats.norm.pdf(theta[0], mu, sigma)
+    p_gs_var = stats.uniform.pdf(theta[1], 0.2, 5.)
+    p_gs_ls = stats.uniform.pdf(theta[2], [8., 8., 1.], [50., 50., 4.])
+
+    p_theta = [p_gs_mean, p_gs_var]
+    [p_theta.append(v) for v in p_gs_ls]
+
+    return joint_distribution(p_theta)
+
 def k_proposal_distribution(theta, s=1):
+    """
+    Calculate the "q(theta)" of conductivity
+    """
     # return abs(stats.norm.rvs(loc=theta, scale=1e-4, size=s))
     return np.random.uniform(1e-6, 1e-3, size=2)
 
-def proposal_calculate(target, condition):
-    """
-    Parameters
-    ------
-    target : theta_cur
-    condition : theta_star
-
-    """
-    return joint_distribution(stats.norm.pdf(target, condition))
-
-def joint_distribution(dist):
-    """
-    ln(results) = ln(P(x1)) + ln(P(x2)) +...
-    return a value of joint distribution : P(x1)*P(x2)*...P(xn)
-    """
-    res = 0
-    for v in dist:
-        res += np.math.log(v)
-    return np.math.exp(res)
-
 def gs_mean_proposal_distribution(mean=np.log(2e-5), var=0.3):
     """
+    Calculate the "q(theta)" of gs_mean
     gs_mean is follow normal distribution ~ N(mean, var)
 
     Returns
@@ -159,3 +180,44 @@ def gs_mean_proposal_distribution(mean=np.log(2e-5), var=0.3):
     sampling from proposal distribution (uniform)
     """
     return np.random.uniform(mean-var, mean+var)
+
+def proposal_calculate(target, condition):
+    """
+    Calculate the "q(theta_star|theta_cur)" or "q(theta_cur|theta_star)"
+
+    Notice : if the theta_star and theta_cur is very close, then
+             return high probability.
+
+    Parameters
+    ------
+    target : theta_cur
+    condition : theta_star
+
+    """
+    pp_res = 1
+
+    for para_index in range(len(target)):
+        pp_res *= joint_distribution(stats.norm.pdf(target[para_index], condition[para_index]))
+
+    return pp_res
+
+def joint_distribution(dist):
+    """
+    Math trick:
+    Because of p(theta) is very small value, so
+    use ln(p(theta)) to calculate firstly, avoid
+    small value product small value.
+
+    ln(results) = ln(P(x1)) + ln(P(x2)) +...
+    return a value of joint distribution : P(x1)*P(x2)*...P(xn)
+    """
+    res = 0
+    if isinstance(dist, list) or isinstance(dist, np.ndarray):
+        for v in dist:
+            if v != 0:
+                res += np.math.log(v)
+    else:
+        if dist != 0:
+            res += np.math.log(dist)
+        
+    return np.math.exp(res)

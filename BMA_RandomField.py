@@ -1,4 +1,4 @@
-# For Minshuan case (heterogeneous, random field)
+# For Demo case (heterogeneous, random field)
 import Mc_module as MC
 import numpy as np
 import pandas as pd
@@ -6,12 +6,12 @@ import time
 import Voronoi_tessellation
 import RandomField as RF
 
-def getPositiondata():
-    pos = ([], [], [])
-    for i in range(MC.doc.getNumberOfNodes()):
-        pos[0].append(MC.doc.getX(i))
-        pos[1].append(MC.doc.getY(i))
-        pos[2].append(MC.doc.getZ(i))
+def getPositiondata(eleFile):
+    """
+    Get coordinates of "elements" from fem file, then
+    return the pos for random field generator
+    """
+    pos = (eleFile["X"], eleFile["Y"], eleFile["Z"])
 
     return pos
 
@@ -39,9 +39,9 @@ def create_markov_chain(n):
     chain = []
     # Initialize the uncertainty parameters by sampling from proposal distr
     # Notice the gs_var and gs_lenScale which itself is uniform distr (eg proposal distr)
-    chain.append[MC.gs_mean_proposal_distribution(),
+    chain.append([MC.gs_mean_proposal_distribution(),
                  rfg.gs_varDistr(),
-                 rfg.gs_lenScaleDistr()]
+                 rfg.gs_lenScaleDistr()])
 
     rejection_rate = 0
 
@@ -67,8 +67,8 @@ def create_markov_chain(n):
 
         u = np.random.uniform(size=1)[0]
 
-        acceptance_rate = min(1, likelihood_star['likelihood']*MC.k_target_distribution(theta_star)*MC.proposal_calculate(theta_cur, theta_star)/\
-            MC.k_target_distribution(theta_cur)/MC.proposal_calculate(theta_star, theta_cur)/likelihood_cur['likelihood'])
+        acceptance_rate = min(1, likelihood_star['likelihood']*MC.gs_parameters_target_distribution(theta_star)*MC.proposal_calculate(theta_cur, theta_star)/\
+            MC.gs_parameters_target_distribution(theta_cur)/MC.proposal_calculate(theta_star, theta_cur)/likelihood_cur['likelihood'])
         # acceptance_rate = min(1, likelihood_star['likelihood']/likelihood_cur['likelihood'])
 
         if u <= acceptance_rate:
@@ -86,13 +86,14 @@ def create_markov_chain(n):
 if __name__ == "__main__":
     time_start = time.time()
 
-    MC.get_fem_file('C:\\JunXiang\\通量技術指引\\fem\\True_transport_RandomField.fem')
+    MC.get_fem_file('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\True_transport_RandomField.fem')
 
     K_zone = [e+1 for e in range(MC.doc.getNumberOfElements())]
 
-    pos = getPositiondata()
+    eleFile = pd.read_excel("C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\True_transport_RandomField_Kxx.fem.xlsx")
+    pos = getPositiondata(eleFile)
 
-    obs_data_file = 'C:\\JunXiang\通量技術指引\Excel\\Obs_conc_RandomField.xlsx'
+    obs_data_file = 'C:\\Users\\JunXiang\Desktop\\傑明工程\\fem\\excel\\Obs_conc_RandomField.xlsx'
     obs_data = MC.get_obs_data(obs_data_file)
 
     obs_nodes = list(obs_data.keys())
@@ -119,8 +120,7 @@ if __name__ == "__main__":
     print('time=', time_end-time_start)
     # pd.DataFrame(markov_chain['chain']).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Theta_v1.xlsx')
     pd.DataFrame(prior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Prior_qc_randomField.xlsx')
-    pd.DataFrame(posterior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Posterior_qc_v1-2.xlsx')
+    pd.DataFrame(posterior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Posterior_qc_randomField.xlsx')
     
     import winsound
     winsound.PlaySound('SystemHand', winsound.SND_ALIAS)
-
