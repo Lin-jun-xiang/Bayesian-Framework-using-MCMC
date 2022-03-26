@@ -69,10 +69,22 @@ Then we setting the Mass concentration Dirichlet BC, then start 100 days simulat
 As following image, the left image show the concentration distribution in slice-1, and
 we will take the control plane data as our concentration of observation.
 
-Using Voronoi method to calculate the control plane mass flux is "0.00286233".
+Using Voronoi method to calculate the control plane mass flux is "0.0004389".
 
 <p align="center">
   <image src="https://user-images.githubusercontent.com/63782903/160133801-5e558cd4-e2ba-4b93-a4b3-64ed8135b8dc.png" width=50%>
 </p>
 
-  ..
+---
+## Results
+Prior ensemble : the mass flux distribution created by prior gs_parameters.
+
+Posterior ensemble : the mass flux distribution created by posterior gs_parameters (MCMC sampling).
+
+True mass flux (red axvline) : 0.0004389 calculated by true site model.
+
+<p align="center">
+   <image src="https://user-images.githubusercontent.com/63782903/160230995-9dc61d7d-1203-4fc5-88b5-91687d9b73ab.png" width=50%>
+</p>
+           
+As we can see, using the MCMC can reduce the uncertainty which variance of distribution is more lower.
