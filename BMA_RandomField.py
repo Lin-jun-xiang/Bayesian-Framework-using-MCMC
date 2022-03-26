@@ -38,7 +38,12 @@ def prior_ensemble():
 
 def create_markov_chain(n):
     chain = []
-    chain.append(MC.proposal_distribution(theta=1e-3, s=2))
+    # Initialize the uncertainty parameters by sampling from proposal distr
+    # Notice the gs_var and gs_lenScale which itself is uniform distr (eg proposal distr)
+    chain.append[MC.gs_mean_proposal_distribution(),
+                 RF.RandomFieldGenerator.gs_varDistr(),
+                 RF.RandomFieldGenerator.gs_lenScaleDistr()]
+
     rejection_rate = 0
 
     covMatrix = MC.covariance_matrix(n_obs=len(obs_data))

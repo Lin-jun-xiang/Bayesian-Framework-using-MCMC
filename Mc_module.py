@@ -126,7 +126,7 @@ def k_target_distribution(theta, mu=1e-3, sigma=1e-3):
     """
     return joint_distribution([stats.norm.pdf(np.math.log(theta_i), loc=np.math.log(mu**2/(mu**2+sigma**2)**0.5), scale=(np.math.log((sigma/mu)**2+1))**0.5) for theta_i in theta])
 
-def proposal_distribution(theta, s=1):
+def k_proposal_distribution(theta, s=1):
     # return abs(stats.norm.rvs(loc=theta, scale=1e-4, size=s))
     return np.random.uniform(1e-6, 1e-3, size=2)
 
@@ -149,3 +149,13 @@ def joint_distribution(dist):
     for v in dist:
         res += np.math.log(v)
     return np.math.exp(res)
+
+def gs_mean_proposal_distribution(mean=np.log(2e-5), var=0.3):
+    """
+    gs_mean is follow normal distribution ~ N(mean, var)
+
+    Returns
+    -------
+    sampling from proposal distribution (uniform)
+    """
+    return np.random.uniform(mean-var, mean+var)
