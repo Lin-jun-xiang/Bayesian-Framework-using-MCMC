@@ -16,7 +16,6 @@ def getPositiondata():
     return pos
 
 def prior_ensemble():
-    rfg = RF.RandomFieldGenerator()
     prior_gs_mean, prior_gs_var, prior_gs_ls = [], [], []
     realizations = []
     prior = []
@@ -41,8 +40,8 @@ def create_markov_chain(n):
     # Initialize the uncertainty parameters by sampling from proposal distr
     # Notice the gs_var and gs_lenScale which itself is uniform distr (eg proposal distr)
     chain.append[MC.gs_mean_proposal_distribution(),
-                 RF.RandomFieldGenerator.gs_varDistr(),
-                 RF.RandomFieldGenerator.gs_lenScaleDistr()]
+                 rfg.gs_varDistr(),
+                 rfg.gs_lenScaleDistr()]
 
     rejection_rate = 0
 
@@ -51,12 +50,20 @@ def create_markov_chain(n):
     posterior = []
     for t in range(n-1):
         theta_cur = chain[-1]
+        realization_cur = rfg.uncondFieldGenerator(pos,
+                                                   theta_cur[0],
+                                                   theta_cur[1],
+                                                   theta_cur[2])
+        likelihood_cur = MC.likelihood_calculate(obs_data, obs_nodes, K_zone, realization_cur, covMatrix, area=voronoi_area)
 
-        likelihood_cur = MC.likelihood_calculate(obs_data, obs_nodes, K_zone, theta_cur, covMatrix, area=voronoi_area)
-
-        theta_star = MC.proposal_distribution(theta=theta_cur, s=2)
-
-        likelihood_star = MC.likelihood_calculate(obs_data, obs_nodes, K_zone, theta_star, covMatrix, area=voronoi_area)
+        theta_star = [MC.gs_mean_proposal_distribution(),
+                      rfg.gs_varDistr(),
+                      rfg.gs_lenScaleDistr()]
+        realization_star = rfg.uncondFieldGenerator(pos,
+                                                    theta_star[0],
+                                                    theta_star[1],
+                                                    theta_star[2])
+        likelihood_star = MC.likelihood_calculate(obs_data, obs_nodes, K_zone, realization_star, covMatrix, area=voronoi_area)
 
         u = np.random.uniform(size=1)[0]
 
@@ -70,6 +77,7 @@ def create_markov_chain(n):
         else:
             chain.append(theta_cur)
             posterior.append(likelihood_cur['sim_data'][output_target])
+            # If rejection_rate too big, can adjust the "u"
             rejection_rate += 1
         print('chain-', t+1)
 
@@ -78,13 +86,13 @@ def create_markov_chain(n):
 if __name__ == "__main__":
     time_start = time.time()
 
-    MC.get_fem_file('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\True_transport_v2.fem')
+    MC.get_fem_file('C:\\JunXiang\\通量技術指引\\fem\\True_transport_RandomField.fem')
 
     K_zone = [e+1 for e in range(MC.doc.getNumberOfElements())]
 
     pos = getPositiondata()
 
-    obs_data_file = 'C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Obs_conc_RandomField.xlsx'
+    obs_data_file = 'C:\\JunXiang\通量技術指引\Excel\\Obs_conc_RandomField.xlsx'
     obs_data = MC.get_obs_data(obs_data_file)
 
     obs_nodes = list(obs_data.keys())
@@ -96,9 +104,11 @@ if __name__ == "__main__":
 
     nRealizations = 100
 
+    rfg = RF.RandomFieldGenerator()
+
     prior = prior_ensemble()
 
-    markov_chain = create_markov_chain(nRealizations)
+    markov_chain = create_markov_chain(n=nRealizations)
     burn_in_period = 0
 
     posterior = markov_chain['posterior'][burn_in_period-1:]
