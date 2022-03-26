@@ -9,7 +9,7 @@ Uncertainty Analysis by Markov Chain Monte Carlo
 ## Introduction
 
 The contaminated site model exist some uncertainty (ex: model, boundary condition, contaminated parameters and **hydraulic conductivity** uncertainty...), therefore, 
-reduce the uncertainty and show the range of uncertainty will be our target.
+`reduce the uncertainty` and `show the range of uncertainty` will be our target.
 
 Uncertainty target:
 >1. In the **homogeneous case**, the hydraulic conductivity will be our uncertainty target (see BMA_algorithm.py).
