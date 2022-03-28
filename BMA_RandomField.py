@@ -11,7 +11,10 @@ def getPositiondata(eleFile):
     Get coordinates of "elements" from fem file, then
     return the pos for random field generator
     """
-    pos = (eleFile["X"], eleFile["Y"], eleFile["Z"])
+    if dimensionalProb == 3:
+        pos = (eleFile["X"], eleFile["Y"], eleFile["Z"])
+    if dimensionalProb == 2:
+        pos = (eleFile["X"], eleFile["Y"])
 
     return pos
 
@@ -83,27 +86,43 @@ def create_markov_chain(n):
 
     return {'chain':chain, 'posterior':posterior, 'rejection':rejection_rate/(n-1)}
 
+def getFileName():
+    fem_file = "C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\Virtual_3D_InitialRF.fem"
+    ele_file = "C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Virtual2D_RF.xlsx"
+    obs_data = "C:\\Users\\JunXiang\Desktop\\傑明工程\\fem\\excel\\Obs_conc_Virtual2D_RandomField.xlsx"
+
+    return fem_file, ele_file, obs_data
+
 if __name__ == "__main__":
     time_start = time.time()
 
-    MC.get_fem_file('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\True_transport_RandomField.fem')
+    dimensionalProb = 3
+
+    filename = getFileName()
+
+    # TO DO : Get the FEFLOW fem file
+    MC.get_fem_file(filename[0])
 
     K_zone = [e+1 for e in range(MC.doc.getNumberOfElements())]
 
-    eleFile = pd.read_excel("C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\True_transport_RandomField_Kxx.fem.xlsx")
+    # TO DO : Get the coordinates of element from FEFLOW
+    eleFile = pd.read_excel(filename[1])
     pos = getPositiondata(eleFile)
 
-    obs_data_file = 'C:\\Users\\JunXiang\Desktop\\傑明工程\\fem\\excel\\Obs_conc_RandomField.xlsx'
-    obs_data = MC.get_obs_data(obs_data_file)
+    # TO DO : Get the concentration of observation data
+    obs_data = MC.get_obs_data(filename[2])
 
     obs_nodes = list(obs_data.keys())
 
-    voronoi_area = Voronoi_tessellation.voronoi(obs_data=pd.read_excel(obs_data_file))
+    voronoi_area = Voronoi_tessellation.voronoi(obs_data=pd.read_excel(filename[2]))
     control_plane_area = 1000
 
     output_target = 'mass_discharge'
 
     nRealizations = 100
+
+    # Get initialize concentration field, for monte carlo simulation
+    MC.get_initialize_concField()
 
     rfg = RF.RandomFieldGenerator()
 
@@ -119,9 +138,8 @@ if __name__ == "__main__":
     print('rejection rate=', markov_chain['rejection'])
     print('time=', time_end-time_start)
     # pd.DataFrame(markov_chain['chain']).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Theta_v1.xlsx')
-    pd.DataFrame(prior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Prior_qc_randomField.xlsx')
-    pd.DataFrame(posterior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Posterior_qc_randomField.xlsx')
+    pd.DataFrame(prior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Prior_qc_V3D_randomField.xlsx')
+    pd.DataFrame(posterior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Posterior_qc_V3D_randomField.xlsx')
     
     import winsound
     winsound.PlaySound('SystemHand', winsound.SND_ALIAS)
-

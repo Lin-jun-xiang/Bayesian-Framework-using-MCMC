@@ -4,13 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import Voronoi_tessellation as vt
 
-prior_mass_flux = pd.read_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Prior_qc_randomField.xlsx')['mass_flux']
+prior_mass_flux = pd.read_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Prior_qc_V3D_randomField.xlsx')['mass_flux']
 
-posterior_v1 = pd.read_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Posterior_qc_randomField.xlsx')['mass_flux']
+posterior_v1 = pd.read_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Posterior_qc_V3D_randomField.xlsx')['mass_flux']
 
 posterior_v1_2 = pd.read_excel('C:\JunXiang\傑明工程\Fem\excel\Posterior_qc_v2-2.xlsx')['mass_flux']
 
-true_v1_file = pd.read_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Obs_conc_RandomField.xlsx')
+true_v1_file = pd.read_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Obs_conc_V3D_RandomField.xlsx')
 vor_area = vt.voronoi(true_v1_file)
 c = true_v1_file['MINIT']
 true_v1 = 0
@@ -24,10 +24,10 @@ def get_fem_file(file):
     sys.path.append("C:\\Program Files\\DHI\\2020\\FEFLOW 7.3\\bin64")
     global doc
     doc = ifm.loadDocument(file)
-get_fem_file('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\True_transport_RandomField.fem')
+get_fem_file('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\Virtual_3D_InitialRF.fem')
 
 
-# true_v1 = true_v1/1000
+true_v1 = true_v1/1000
 
 # true_v1_2_file = pd.read_excel('C:\JunXiang\傑明工程\Fem\excel\\Obs_conc_v1-2.xlsx')
 # vor_area = vt.voronoi(true_v1_2_file)

@@ -78,11 +78,23 @@ def set_ifm_K(zone_elements, theta_K):
             doc.setMatYConductivityValue3D(int(zone_elements[i])-1, theta_K[i] * 24 * 3600)
             doc.setMatZConductivityValue3D(int(zone_elements[i])-1, theta_K[i] * 24 * 3600 * 0.1)
 
+def get_initialize_concField():
+    """
+    Get the initialization concentration field.
+    """
+    global init_concField
+    init_concField = []
+
+    for node in range(doc.getNumberOfNodes()):
+        init_concField.append(doc.getResultsTransportMassValue(node))
+
+    return init_concField
+
 def initialize_results():
     """
     For transport simulation, need to initialize 'concentration' for avoid concentration accumulation.
     """
-    [doc.setResultsTransportMassValue(node, 0) for node in range(doc.getNumberOfNodes())]
+    [doc.setResultsTransportMassValue(node, init_concField[node]) for node in range(doc.getNumberOfNodes())]
 
 def covariance_matrix(n_obs, r=0.8, sigma=0.01):
     """
