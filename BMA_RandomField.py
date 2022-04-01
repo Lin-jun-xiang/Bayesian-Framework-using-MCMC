@@ -22,7 +22,7 @@ def getPositiondata(eleFile):
 def prior_ensemble():
     prior_gs_mean, prior_gs_var, prior_gs_ls = [], [], []
     realizations = []
-    prior = []
+    prior = {"concentraion":[], "mass_flux":[]}
     for i in range(nRealizations):
         # Only take rd_mean in prior
         prior_gs_mean.append(rfg.gs_meanDistr()[0])
@@ -34,7 +34,9 @@ def prior_ensemble():
                                                      prior_gs_ls[i]))
 
         MC.set_ifm_K(K_zone, realizations[i])
-        prior.append(MC.get_sim_data(obs_nodes, area=voronoi_area)[output_target])
+        sim_result = MC.get_sim_data(obs_nodes, area=voronoi_area)
+        prior["concentraion"].append(sim_result["concentraion"])
+        prior["mass_flux"].append(sim_result["mass_flux"])
         print('prior-', i+1)
 
     return prior
@@ -51,7 +53,7 @@ def create_markov_chain(n):
 
     covMatrix = MC.covariance_matrix(n_obs=len(obs_data))
 
-    posterior = []
+    posterior = {"concentraion":[], "mass_flux":[]}
     for t in range(n-1):
         theta_cur = chain[-1]
         realization_cur = rfg.uncondFieldGenerator(pos,
@@ -76,10 +78,12 @@ def create_markov_chain(n):
 
         if u <= acceptance_rate:
             chain.append(theta_star)
-            posterior.append(likelihood_star['sim_data'][output_target])
+            posterior["concentraion"].append(likelihood_star['sim_data']["concentraion"])
+            posterior["mass_flux"].append(likelihood_star['sim_data']["mass_flux"])
         else:
             chain.append(theta_cur)
-            posterior.append(likelihood_cur['sim_data'][output_target])
+            posterior["concentraion"].append(likelihood_cur['sim_data']["concentraion"])
+            posterior["mass_flux"].append(likelihood_cur['sim_data']["mass_flux"])
             # If rejection_rate too big, can adjust the "u"
             rejection_rate += 1
         print('chain-', t+1)
@@ -93,16 +97,16 @@ def getFileName():
 
     return fem_file, ele_file, obs_data
 
-def conc_writter(conc_data, multiSpecies):
+def conc_writter(conc_data, ensembleType, multiSpecies=True):
     """
     Write the concentration result for each observation node
     1. For MultiSpcecies: will create multiple worksheet
-    2. For SingleSpecies: only create one worksheet 
+    2. For SingleSpecies: only create one worksheet
     """
-    output_file = "C:\\JunXiang\\Python\\Excel_py\\BMA_ConcResults.xlsx"
-    writer = xlsxwriter.Workbook(output_file)
+    output_file = f"C:\\JunXiang\\Python\\Excel_py\\{ensembleType}_ConcResults.xlsx"
 
     if multiSpecies:
+        writer = xlsxwriter.Workbook(output_file)
         multiSpecies_info = MC.get_MultiSpecies_Info()["species_id"]
 
         for species in multiSpecies_info:
@@ -113,14 +117,20 @@ def conc_writter(conc_data, multiSpecies):
                 worksheet.write(0, c+1, f"Obs_{node}")
                 for i in range(len(conc_data)):
                     worksheet.write(i+1, c+1, conc_data[i][species][node])
+        writer.close()
+    else:
+        df = pd.DataFrame(conc_data)
+        df.to_excel(output_file, index=False)
 
-    writer.close()
+def massFlux_writter(massFlux_data, ensembleType):
+    """
+    Write the mass flux result for each Species (Multi or Single)
+    """
+    output_file = f"C:\\JunXiang\\Python\\Excel_py\\{ensembleType}_MassFluxResults.xlsx"
 
-def massFlux_writter(massFlux_data, multiSpecies):
-    """
-    Write the mass flux result for each Species
-    """
-    
+    df = pd.DataFrame(massFlux_data)
+    df.to_excel(output_file, index=False)
+
 if __name__ == "__main__":
     time_start = time.time()
 
@@ -139,19 +149,17 @@ if __name__ == "__main__":
 
     K_zone = [e+1 for e in range(MC.doc.getNumberOfElements())]
 
-    # TO DO : Get the coordinates of element from FEFLOW
+    # Get the coordinates of element from FEFLOW
     eleFile = pd.read_excel(filename[1])
     pos = getPositiondata(eleFile)
 
-    # TO DO : Get the concentration of observation data
+    # Get the concentration of observation data
     obs_data = MC.get_obs_data(filename[2])
 
     obs_nodes = list(obs_data.keys())
 
     voronoi_area = Voronoi_tessellation.voronoi(obs_data=pd.read_excel(filename[2]))
     control_plane_area = 1000
-
-    output_target = 'mass_discharge'
 
     nRealizations = 100
 
@@ -171,9 +179,13 @@ if __name__ == "__main__":
 
     print('rejection rate=', markov_chain['rejection'])
     print('time=', time_end-time_start)
-    # pd.DataFrame(markov_chain['chain']).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Theta_v1.xlsx')
-    pd.DataFrame(prior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Prior_qc_V3D_randomField.xlsx')
-    pd.DataFrame(posterior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Posterior_qc_V3D_randomField.xlsx')
 
+    # Write concentration data
+    conc_writter(prior["concentration"], ensembleType="Prior")
+    conc_writter(posterior["concetraion"], ensembleType="Posterior")
+
+    # Write mass flux data
+    massFlux_writter(prior["mass_flu"], ensembleType="Prior")
+    massFlux_writter(posterior["mass_flux"], ensembleType="Posterior")
     import winsound
     winsound.PlaySound('SystemHand', winsound.SND_ALIAS)
