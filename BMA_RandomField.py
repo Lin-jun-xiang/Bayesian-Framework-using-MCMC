@@ -5,6 +5,7 @@ import pandas as pd
 import time
 import Voronoi_tessellation
 import RandomField as RF
+import xlsxwriter
 
 def getPositiondata(eleFile):
     """
@@ -92,12 +93,40 @@ def getFileName():
 
     return fem_file, ele_file, obs_data
 
+def conc_writter(conc_data, multiSpecies):
+    """
+    Write the concentration result for each observation node
+    1. For MultiSpcecies: will create multiple worksheet
+    2. For SingleSpecies: only create one worksheet 
+    """
+    output_file = "C:\\JunXiang\\Python\\Excel_py\\BMA_ConcResults.xlsx"
+    writer = xlsxwriter.Workbook(output_file)
+
+    if multiSpecies:
+        multiSpecies_info = MC.get_MultiSpecies_Info()["species_id"]
+
+        for species in multiSpecies_info:
+            worksheet = writer.add_worksheet(species)
+            worksheet.write(0, 0, "Realizations")
+
+            for c, node in enumerate(conc_data[i][species]):
+                worksheet.write(0, c+1, f"Obs_{node}")
+                for i in range(len(conc_data)):
+                    worksheet.write(i+1, c+1, conc_data[i][species][node])
+
+    writer.close()
+
+def massFlux_writter(massFlux_data, multiSpecies):
+    """
+    Write the mass flux result for each Species
+    """
+    
 if __name__ == "__main__":
     time_start = time.time()
 
     dimensionalProb = 3
 
-    # If multiSpecies: 
+    # If multiSpecies:
     # 1. The FEFLOW should setting more than 1 species
     # 2. The algorithm will get the concentration and mass flux for each species
     # 3. But cannot consider the multispecies in the "calculate likelihood" (TO DO)
