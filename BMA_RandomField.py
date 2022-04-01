@@ -72,7 +72,6 @@ def create_markov_chain(n):
 
         acceptance_rate = min(1, likelihood_star['likelihood']*MC.gs_parameters_target_distribution(theta_star)*MC.proposal_calculate(theta_cur, theta_star)/\
             MC.gs_parameters_target_distribution(theta_cur)/MC.proposal_calculate(theta_star, theta_cur)/likelihood_cur['likelihood'])
-        # acceptance_rate = min(1, likelihood_star['likelihood']/likelihood_cur['likelihood'])
 
         if u <= acceptance_rate:
             chain.append(theta_star)
@@ -98,6 +97,12 @@ if __name__ == "__main__":
 
     dimensionalProb = 3
 
+    # If multiSpecies: 
+    # 1. The FEFLOW should setting more than 1 species
+    # 2. The algorithm will get the concentration and mass flux for each species
+    # 3. But cannot consider the multispecies in the "calculate likelihood" (TO DO)
+    multiSpecies = True
+
     filename = getFileName()
 
     # TO DO : Get the FEFLOW fem file
@@ -122,7 +127,7 @@ if __name__ == "__main__":
     nRealizations = 100
 
     # Get initialize concentration field, for monte carlo simulation
-    MC.get_initialize_concField()
+    MC.get_initialize_concField(multiSpecies)
 
     rfg = RF.RandomFieldGenerator()
 
@@ -140,6 +145,6 @@ if __name__ == "__main__":
     # pd.DataFrame(markov_chain['chain']).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Theta_v1.xlsx')
     pd.DataFrame(prior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Prior_qc_V3D_randomField.xlsx')
     pd.DataFrame(posterior).to_excel('C:\\Users\\JunXiang\\Desktop\\傑明工程\\fem\\excel\\Posterior_qc_V3D_randomField.xlsx')
-    
+
     import winsound
     winsound.PlaySound('SystemHand', winsound.SND_ALIAS)

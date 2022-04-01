@@ -36,29 +36,67 @@ def get_obs_data(obs_data_filepath):
 
     return obs_data
 
-def get_sim_data(nodes, area, control_plane_area=1000):
+def get_MultiSpecies_Info():
     """
+    1. Get the MultiSpecies "name" and "id" in FEFLOW by IFM
+    2. Initialize the concentraion hash table for multiSpecies
+    """
+    concentration = {}
+    species_id = {}
+
+    num_species = doc.getNumberOfSpecies()
+    if num_species >= 2:
+        # if not, cannot call doc.getSpeciesName
+        species_name = [doc.getSpeciesName(i) for i in num_species]
+        for i, name in enumerate(species_name):
+            if name not in concentration:
+                concentration[name] = {}
+                species_id[name] = i
+
+    return {"concentration" : concentration, "species_id" : species_id}
+
+def get_sim_data(nodes, area, control_plane_area=1000, MultiSpecies=True):
+    """
+    Parameters
+    ----------
+    nodes : the nodes which located in the Observation point
+    area : the voronoi area of each node
+
     Darcy flux - [m/d] to [m/yr] ; Concentration - [mg/l] to [kg/m^3] ; Area - [m^2]
     Mass discharge = [(Darcy flux)*365] * [(Concentration)*1e-3] * [(Area)] which unit is [kg/yr]
-    return "simulated" data (head, mass concentration, darcy flux, mass discharge)
+    return "simulated" data (mass concentration, darcy flux, mass discharge)
     """
-    head, concentration, darcy_flux = {}, {}, {}
-    mass_discharge = {}
+    concentration = {}
+    mass_flux = {}
 
-    initialize_results()
+    initialize_results(MultiSpecies)
 
     doc.startSimulator()
-    for node in nodes:
-        head[int(node)] = doc.getResultsFlowHeadValue(int(node)-1)
-        darcy_flux[int(node)] = doc.getResultsXVelocityValue(int(node)-1)
-        concentration[int(node)] = doc.getResultsTransportMassValue(int(node)-1)
-        mass_discharge[int(node)] = darcy_flux[int(node)] * concentration[int(node)] * area[int(node)] * 365 * 1e-3
 
-    mass_discharge['mass_discharge'] = sum([v for v in mass_discharge.values()])
-    mass_discharge['mass_flux'] = mass_discharge['mass_discharge']/control_plane_area
+    if MultiSpecies:
+        MultiSpecies_Info = get_MultiSpecies_Info()
+        concentration = MultiSpecies_Info["concentration"]
+        species_id = MultiSpecies_Info["species_id"]
+
+        for species in species_id:
+            doc.setMultiSpeciesId(species_id[species])
+            mass_flux[species] = {}
+
+            for node in nodes:
+                concentration[species][int(node)] = doc.getResultsTransportMassValue(int(node)-1)
+                mass_flux[species][int(node)] = doc.getResultsXVelocityValue(int(node)-1) * concentration[species][int(node)] * area[int(node)] * 365 * 1e-3
+            mass_flux[species] = sum([v for v in mass_flux[species].values()])
+            mass_flux[species] = mass_flux[species] / control_plane_area
+    else:
+        for node in nodes:
+            concentration[int(node)] = doc.getResultsTransportMassValue(int(node)-1)
+            mass_flux[int(node)] = doc.getResultsXVelocityValue(int(node)-1) * concentration[int(node)] * area[int(node)] * 365 * 1e-3
+        mass_flux = sum([v for v in mass_flux.values()])
+        mass_flux = mass_flux / control_plane_area
+
     doc.stopSimulator()
 
-    return {'head':head, 'concentration':concentration, 'darcy_flux':darcy_flux, 'mass_discharge':mass_discharge}
+    return {'concentration':concentration, 'mass_flux':mass_flux}
 
 def set_ifm_K(zone_elements, theta_K):
     """
@@ -66,6 +104,7 @@ def set_ifm_K(zone_elements, theta_K):
     Input conductivity units is "m/s", need to convert to "m/d"
     """
     if type(theta_K) == float:
+        # Homogeneous case
         theta_K = theta_K * 24 * 3600
 
         for element in zone_elements:
@@ -73,28 +112,41 @@ def set_ifm_K(zone_elements, theta_K):
             doc.setMatYConductivityValue3D(int(element)-1, theta_K)
             doc.setMatZConductivityValue3D(int(element)-1, theta_K*0.1)
     else:
+        # Heterogeneou case
         for i in range(len(zone_elements)):
             doc.setMatXConductivityValue3D(int(zone_elements[i])-1, theta_K[i] * 24 * 3600)
             doc.setMatYConductivityValue3D(int(zone_elements[i])-1, theta_K[i] * 24 * 3600)
             doc.setMatZConductivityValue3D(int(zone_elements[i])-1, theta_K[i] * 24 * 3600 * 0.1)
 
-def get_initialize_concField():
+def get_initialize_concField(MultiSpecies):
     """
     Get the initialization concentration field.
     """
     global init_concField
-    init_concField = []
 
-    for node in range(doc.getNumberOfNodes()):
-        init_concField.append(doc.getResultsTransportMassValue(node))
+    if MultiSpecies:
+        init_concField = {}
+        for i in range(doc.getNumberOfSpecies()):
+            # Convert the species type, then get the concentration fo species
+            doc.setMultiSpeciesId(i)
+            init_concField[i] = []
+            for node in range(doc.getNumberOfNodes()):
+                init_concField[i].append(doc.getResultsTransportMassValue(node))
+    else:
+        init_concField = []
+        for node in range(doc.getNumberOfNodes()):
+            init_concField.append(doc.getResultsTransportMassValue(node))
 
-    return init_concField
-
-def initialize_results():
+def initialize_results(MultiSpecies):
     """
     For transport simulation, need to initialize 'concentration' for avoid concentration accumulation.
     """
-    [doc.setResultsTransportMassValue(node, init_concField[node]) for node in range(doc.getNumberOfNodes())]
+    if MultiSpecies:
+        for i in range(doc.getNumberOfSpecies()):
+            doc.setMultiSpeciesId(i)
+            [doc.setResultsTransportMassValue(node, init_concField[i][node]) for node in range(doc.getNumberOfNodes())]
+    else:
+        [doc.setResultsTransportMassValue(node, init_concField[node]) for node in range(doc.getNumberOfNodes())]
 
 def covariance_matrix(n_obs, r=0.8, sigma=0.01):
     """
@@ -231,5 +283,5 @@ def joint_distribution(dist):
     else:
         if dist != 0:
             res += np.math.log(dist)
-        
+
     return np.math.exp(res)
