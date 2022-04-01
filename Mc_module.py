@@ -161,7 +161,7 @@ def covariance_matrix(n_obs, r=0.8, sigma=0.01):
 
     return sigma*covMatrix
 
-def likelihood_calculate(obs_data, nodes, K_zone, theta, covMatrix, area, target='concentration'):
+def likelihood_calculate(obs_data, nodes, K_zone, theta, covMatrix, area, target='concentration', MultiSpecies=True):
     """
     P(D|theta) = 1/((2π)^(N/2)*|C|^(1/2))*exp⁡((-1/2)*(d-f(θ))^T C^(-1) (d-f(θ))). (reference: Bodin et al.,2012； Zheng et al.,2016)
     left = 1/((2π)^(N/2)*|C|^(1/2))
@@ -171,11 +171,12 @@ def likelihood_calculate(obs_data, nodes, K_zone, theta, covMatrix, area, target
     """
     set_ifm_K(K_zone, theta)
 
-    sim_data = get_sim_data(nodes, area)
+    sim_data = get_sim_data(nodes, area, MultiSpecies=MultiSpecies)
 
     residual = []
-    for key in obs_data:
-        residual.append(obs_data[key] - sim_data[target][key])
+    for node in obs_data:
+        # In this case, just take the major species (PCE) for likelihoode calculate
+        residual.append(obs_data[node] - sim_data[target][doc.getSpeciesName(0)][node])
 
     likelihood_left =  1/((2*3.14159)**len(obs_data)*np.linalg.det(covMatrix))**0.5
     likelihood_right = np.math.exp(-0.5*np.array(residual).dot(np.linalg.inv(covMatrix)).dot(np.array(residual)))

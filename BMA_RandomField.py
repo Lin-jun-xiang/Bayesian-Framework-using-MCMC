@@ -60,7 +60,13 @@ def create_markov_chain(n):
                                                    theta_cur[0],
                                                    theta_cur[1],
                                                    theta_cur[2])
-        likelihood_cur = MC.likelihood_calculate(obs_data, obs_nodes, K_zone, realization_cur, covMatrix, area=voronoi_area)
+        likelihood_cur = MC.likelihood_calculate(obs_data,
+                                                 obs_nodes,
+                                                 K_zone,
+                                                 realization_cur,
+                                                 covMatrix,
+                                                 area=voronoi_area,
+                                                 MultiSpecies=multiSpecies)
 
         theta_star = [MC.gs_mean_proposal_distribution(),
                       rfg.gs_varDistr(),
@@ -69,7 +75,13 @@ def create_markov_chain(n):
                                                     theta_star[0],
                                                     theta_star[1],
                                                     theta_star[2])
-        likelihood_star = MC.likelihood_calculate(obs_data, obs_nodes, K_zone, realization_star, covMatrix, area=voronoi_area)
+        likelihood_star = MC.likelihood_calculate(obs_data,
+                                                  obs_nodes,
+                                                  K_zone,
+                                                  realization_star,
+                                                  covMatrix,
+                                                  area=voronoi_area,
+                                                  MultiSpecies=multiSpecies)
 
         u = np.random.uniform(size=1)[0]
 
@@ -181,8 +193,8 @@ if __name__ == "__main__":
     print('time=', time_end-time_start)
 
     # Write concentration data
-    conc_writter(prior["concentration"], ensembleType="Prior")
-    conc_writter(posterior["concetraion"], ensembleType="Posterior")
+    conc_writter(prior["concentration"], ensembleType="Prior", multiSpecies=multiSpecies)
+    conc_writter(posterior["concetraion"], ensembleType="Posterior", multiSpecies=multiSpecies)
 
     # Write mass flux data
     massFlux_writter(prior["mass_flu"], ensembleType="Prior")
