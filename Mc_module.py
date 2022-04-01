@@ -174,9 +174,13 @@ def likelihood_calculate(obs_data, nodes, K_zone, theta, covMatrix, area, target
     sim_data = get_sim_data(nodes, area, MultiSpecies=MultiSpecies)
 
     residual = []
-    for node in obs_data:
-        # In this case, just take the major species (PCE) for likelihoode calculate
-        residual.append(obs_data[node] - sim_data[target][doc.getSpeciesName(0)][node])
+    if MultiSpecies:
+        for node in obs_data:
+            # In this case, just take the major species (PCE) for likelihoode calculate
+            residual.append(obs_data[node] - sim_data[target][doc.getSpeciesName(0)][node])
+    else:
+        for node in obs_data:
+            residual.append(obs_data[node] - sim_data[target][node])
 
     likelihood_left =  1/((2*3.14159)**len(obs_data)*np.linalg.det(covMatrix))**0.5
     likelihood_right = np.math.exp(-0.5*np.array(residual).dot(np.linalg.inv(covMatrix)).dot(np.array(residual)))
