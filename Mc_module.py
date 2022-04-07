@@ -84,7 +84,8 @@ def get_sim_data(nodes, area, control_plane_area=1000, MultiSpecies=True):
 
             for node in nodes:
                 concentration[species][int(node)] = doc.getResultsTransportMassValue(int(node)-1)
-                mass_flux[species][int(node)] = doc.getResultsXVelocityValue(int(node)-1) * concentration[species][int(node)] * area[int(node)] * 365 * 1e-3
+                darcy_flux = doc.getResultsXVelocityValue(int(node)-1)
+                mass_flux[species][int(node)] = darcy_flux * concentration[species][int(node)] * area[int(node)] * 365 * 1e-3
             mass_flux[species] = sum([v for v in mass_flux[species].values()])
             mass_flux[species] = mass_flux[species] / control_plane_area
     else:
