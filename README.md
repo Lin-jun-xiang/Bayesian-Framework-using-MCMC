@@ -57,7 +57,7 @@ The "true" site model:
 >2. gs_var : 3.2305442
 >3. gs_ls : [11.1, 40.73, 1.53]
 
-The hydraulic conductivity field (Kxx=Kyy=Kzz) of true site in FEFLOW as following image:
+The hydraulic conductivity field (Kxx=Kyy=Kzz) of true site in FEFLOW as following image (build from python - randomfield.py):
 
 <p align="center">
   <image src="https://user-images.githubusercontent.com/63782903/160131301-ffb38b51-fda7-4ce6-a7f3-cbe390b4dc62.png" width=50%/>
